@@ -1,11 +1,36 @@
-
-{"friendlyVersion": "VERSION",
- "versionDefName": "VERSION",
- "media": [
-	   {
-	    "type":"raw",
-	    "defName":"DUMMY",
-	    "file":"resource_map.json"
-	   }
-	  ]
+{
+  "friendlyVersion": "VERSION",
+  "versionDefName": "APP_RESOURCES",
+  "media": [
+    {
+      "defName": "MENU_ICON",
+      "type": "png",
+      "file": "images/menu.png"
+    },
+    {
+      "defName": "ACTION_START",
+      "type": "png",
+      "file": "images/menu_icon_play.png"
+    },
+    {
+      "defName": "ACTION_PAUSE",
+      "type": "png",
+      "file": "images/menu_icon_pause.png"
+    },
+    {
+      "defName": "ACTION_RESTART",
+      "type": "png",
+      "file": "images/menu_icon_restart.png"
+    },
+    {
+      "defName": "FONT_OPENSANS_REGULAR_20",
+      "type": "font",
+      "file": "fonts/OpenSans-Regular.ttf"
+    },
+    {
+      "defName": "FONT_OPENSANS_BOLD_40",
+      "type": "font",
+      "file": "fonts/OpenSans-Bold.ttf"
+    }
+  ]
 }
