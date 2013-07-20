@@ -4,7 +4,7 @@
 
 #define MY_UUID { 0xA1, 0x4E, 0x82, 0x26, 0xBA, 0x2C, 0x49, 0x61, 0x97, 0xD8, 0x70, 0xE2, 0xFA, 0xFC, 0x03, 0x37 }
 
-PBL_APP_INFO(MY_UUID, "Meditation Timer", "Matthew Tole", 1, 0,
+PBL_APP_INFO(MY_UUID, "Meditation Timer", "Small Stone Apps", 1, 0,
   RESOURCE_ID_MENU_ICON, APP_INFO_STANDARD_APP);
 
 #define PEBBLE_HEIGHT 168
@@ -70,14 +70,12 @@ int mode = MODE_STOPPED;
 int time_remaining;
 
 void pbl_main(void *params) {
-
   PebbleAppHandlers handlers = {
     .init_handler = &handle_init,
     .deinit_handler = &handle_deinit,
     .timer_handler = &handle_timer
   };
   app_event_loop(params, &handlers);
-
 }
 
 void load_bitmaps() {
@@ -93,7 +91,6 @@ void unload_bitmaps() {
 }
 
 void handle_init(AppContextRef ctx) {
-
   app_ctx = ctx;
 
   resource_init_current_app(&APP_RESOURCES);
@@ -104,6 +101,14 @@ void handle_init(AppContextRef ctx) {
     .load = (WindowHandler)window_main_load,
     .unload = (WindowHandler)window_main_unload,
   });
+  action_bar_layer_init(&action_bar);
+
+  text_layer_init(&text_layer, GRect(0, 53, 144 - ACTION_BAR_WIDTH, 50));
+  text_layer_set_text_color(&text_layer, GColorBlack);
+  text_layer_set_background_color(&text_layer, GColorClear);
+  text_layer_set_font(&text_layer, fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_OPENSANS_BOLD_40)));
+  text_layer_set_text_alignment(&text_layer, GTextAlignmentCenter);
+  layer_add_child(&window_main.layer, &text_layer.layer);
 
   number_window_init(&numwin_duration, "Meditation Duration", (NumberWindowCallbacks) {
     .decremented = NULL,
@@ -124,24 +129,19 @@ void handle_init(AppContextRef ctx) {
   number_window_set_max(&numwin_interval, MAX_INTERVAL);
 
   window_stack_push((Window*)&numwin_duration, true);
-
 }
 
 void window_main_load(Window* window) {
-  text_layer_init(&text_layer, GRect(0, 53, 144 - ACTION_BAR_WIDTH, 50));
-  text_layer_set_text_color(&text_layer, GColorBlack);
-  text_layer_set_background_color(&text_layer, GColorClear);
-  text_layer_set_font(&text_layer, fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_OPENSANS_BOLD_40)));
-  text_layer_set_text_alignment(&text_layer, GTextAlignmentCenter);
-  layer_add_child(&window_main.layer, &text_layer.layer);
-
-  action_bar_layer_init(&action_bar);
   action_bar_layer_add_to_window(&action_bar, window);
+  update_actionbar_icons();
   init_timer(app_ctx);
 }
 
 void window_main_unload(Window* window) {
   stop_timer(app_ctx);
+  Window* tmp2 = layer_get_window((Layer*)&action_bar);
+  action_bar_layer_remove_from_window(&action_bar);
+  Window* tmp = layer_get_window((Layer*)&action_bar);
 }
 
 void handle_timer(AppContextRef ctx, AppTimerHandle handle, uint32_t cookie) {
@@ -201,21 +201,18 @@ void start_timer(AppContextRef ctx) {
   mode = MODE_RUNNING;
   update_timer_text();
   set_timer(ctx);
-
   update_actionbar_icons();
 }
 
 void resume_timer(AppContextRef ctx) {
   mode = MODE_RUNNING;
   set_timer(ctx);
-
   update_actionbar_icons();
 }
 
 void pause_timer(AppContextRef ctx) {
   cancel_timer(ctx);
   mode = MODE_PAUSED;
-
   update_actionbar_icons();
 }
 
@@ -227,20 +224,16 @@ void reset_timer(AppContextRef ctx) {
 void stop_timer(AppContextRef ctx) {
   cancel_timer(ctx);
   mode = MODE_STOPPED;
-
   update_actionbar_icons();
 }
 
 void window_main_click_config_provider(ClickConfig **config, Window *window) {
-
-  if (mode == MODE_RUNNING || mode == MODE_STOPPED) {
+  if (mode == MODE_RUNNING || mode == MODE_PAUSED || mode == MODE_STOPPED) {
     config[BUTTON_ID_SELECT]->click.handler = (ClickHandler) window_main_select_clicked;
   }
-
   if (mode == MODE_PAUSED || mode == MODE_FINISHED) {
     config[BUTTON_ID_UP]->click.handler = (ClickHandler) window_main_up_clicked;
   }
-
 }
 
 void update_actionbar_icons() {
@@ -269,7 +262,6 @@ void update_actionbar_icons() {
 
   action_bar_layer_set_click_config_provider(&action_bar, (ClickConfigProvider) window_main_click_config_provider);
 }
-
 
 void window_main_select_clicked(ClickRecognizerRef recognizer, Window *window) {
   switch (mode) {
