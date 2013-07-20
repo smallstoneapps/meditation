@@ -167,7 +167,7 @@ void handle_timer(AppContextRef ctx, AppTimerHandle handle, uint32_t cookie) {
 void do_vibration() {
   int minutes_passed = ((duration * 60) - time_remaining) / 60;
   if (minutes_passed % interval == 0) {
-    vibes_double_pulse();
+    vibes_short_pulse();
   }
 }
 
