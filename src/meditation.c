@@ -1,11 +1,39 @@
+/*
+ * Meditation
+ * Copyright (C) 2013 Matthew Tole
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of
+ * this software and associated documentation files (the "Software"), to deal in
+ * the Software without restriction, including without limitation the rights to
+ * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+ * the Software, and to permit persons to whom the Software is furnished to do so,
+ * subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+ * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+ * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 #include "pebble_os.h"
 #include "pebble_app.h"
 #include "pebble_fonts.h"
 
+#include "config.h"
+
+#if ROCKSHOT
+#include "http.h"
+#include "httpcapture.h"
+#endif
+
 #define MY_UUID { 0xA1, 0x4E, 0x82, 0x26, 0xBA, 0x2C, 0x49, 0x61, 0x97, 0xD8, 0x70, 0xE2, 0xFA, 0xFC, 0x03, 0x37 }
 
-PBL_APP_INFO(MY_UUID, "Meditation Timer", "Small Stone Apps", 1, 0,
-  RESOURCE_ID_MENU_ICON, APP_INFO_STANDARD_APP);
+PBL_APP_INFO(MY_UUID, "Meditation Timer", "Matthew Tole", 1, 0, RESOURCE_ID_MENU_ICON, APP_INFO_STANDARD_APP);
 
 #define PEBBLE_HEIGHT 168
 #define STATUS_HEIGHT 16
@@ -49,6 +77,10 @@ void init_timer(AppContextRef ctx);
 void stop_timer(AppContextRef ctx);
 void update_actionbar_icons();
 
+#if ROCKSHOT
+void http_success(int32_t cookie, int http_status, DictionaryIterator *dict, void *ctx);
+#endif
+
 HeapBitmap bmp_action_start;
 HeapBitmap bmp_action_pause;
 HeapBitmap bmp_action_restart;
@@ -75,6 +107,17 @@ void pbl_main(void *params) {
     .deinit_handler = &handle_deinit,
     .timer_handler = &handle_timer
   };
+  
+  #if ROCKSHOT
+  handlers.messaging_info = (PebbleAppMessagingInfo) {
+    .buffer_sizes = {
+      .inbound = 124,
+      .outbound = 124,
+    },
+  };
+  http_capture_main(&handlers);
+  #endif
+
   app_event_loop(params, &handlers);
 }
 
@@ -95,6 +138,14 @@ void handle_init(AppContextRef ctx) {
 
   resource_init_current_app(&APP_RESOURCES);
   load_bitmaps();
+
+  #if ROCKSHOT
+  http_set_app_id(15);
+  http_register_callbacks((HTTPCallbacks) {
+    .success = http_success
+  }, NULL);
+  http_capture_init(ctx);
+  #endif
 
   window_init(&window_main, "Matthew Tole");
   window_set_window_handlers(&window_main, (WindowHandlers) {
@@ -290,3 +341,8 @@ void numwin_interval_selected(struct NumberWindow *number_window, void *context)
   interval = number_window_get_value(&numwin_interval);
   window_stack_push(&window_main, true);
 }
+
+#if ROCKSHOT
+void http_success(int32_t cookie, int http_status, DictionaryIterator *dict, void *ctx) {
+}
+#endif
